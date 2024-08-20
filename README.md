@@ -1,263 +1,128 @@
-# Programmatic Navigation Code-Along
+# Basic Routes Lab
 
 ## Learning Goals
 
-- Explain the use cases for programmatic navigation.
-- Use the `useNavigate` hook to perform programmatic navigation.
-- Use the `<Navigate>` component to perform programmatic navigation.
+- Use `createBrowserRouter` to create a client-side router.
+- Use `RouterProvider` to include the router in your app.
+- Use the `<NavBar>` component to allow client-side navigation.
+- Use `errorElement` to set up router error handling.
 
 ## Introduction
 
-So far, we've used a couple components from React Router to allow our users to
-navigate our React site: the `NavLink` and `Link` components. However, it would
-also be useful to direct our users to another page **without** them needing to
-click a link. For example:
+In this lab we are going to build out a Movie application that has routes for a
+Home Page, Actors Page, Movie Page, and Directors Page. Our goal is to provide
+routes and links for these 4 pages.
 
-- After logging in to the website, direct our user to the home page
-- After logging out of the website, direct our user to the login page
-- After creating a new item by filling out a form, direct our user to the detail
-  page for that item
+Let's work through this one component at a time.
 
-All of these actions require us to use **programmatic navigation** to change the
-browser URL, and show the user a new page in our application, **without** making
-the user click on a link.
+## Setup
 
-We've included some files for you to code along in as we walk through the
-examples below. The files already have routing set up — we just need to update
-them to include programmatic navigation!
+Our `src` folder contains the following JavaScript files:
 
-## The `useNavigate` Hook
-
-To enable programmatic navigation, we can use another custom hook from React
-Router: the `useNavigate` hook. Using it in our application is pretty
-straightforward:
-
-- First, we import it into the component in which we want to use it; in this
-case, we'll be importing into our `App` component: `import { useNavigate } from
-"react-router-dom";`.
-
-- Next, we need to invoke our `useNavigate` hook within our component and save
-the returned function in a variable. Let's call that variable `navigate` for
-simplicity: `const navigate = useNavigate()`.
-
-- Then, whenever we want to use programmatic navigation, we'll simply pass the
-route we want to navigate our user to as an argument to the `navigate` function.
-`navigate("/")`.
-
-Let's update our `App` component to include some programmatic navigation logic,
-as well as some state management logic that mocks user authentication:
-
-```jsx
-// App.js
-import { useState, useEffect } from "react";
-// Add useNavigate to import
-import { Outlet, useNavigate} from "react-router-dom";
-import NavBar from "./components/NavBar";
-
-function App() {
-    // Add code to mock user authentication
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const navigate = useNavigate();
-
-  const login = () =>{
-    setIsLoggedIn(true);
-  }
-
-  const logout = () =>{
-    setIsLoggedIn(false);
-  };
-
-    // Add programmatic navigation for login and logout
-  useEffect(() =>{
-    if (isLoggedIn) {
-        // navigates to Home route if user is logged in
-      navigate("/");
-    } else {
-        // navigates to Login route if user is logged out
-      navigate("/login");
-    };
-  }, [isLoggedIn]);
-
-  return (
-    <div className="app">
-      <NavBar logout={logout} />
-        { /*Pass login function to Outlet as context */}
-      <Outlet context={login}/>
-    </div>
-  );
-};
-
-export default App;
+```txt
+src/
+├── components/
+    ├── MovieCard.js
+    ├── NavBar.js
+    ├── NavBar.css
+└── pages/
+    ├── Actors.js
+    ├── Directors.js
+    ├── Home.js
+    ├── Movie.js
+├── index.css
+├── index.js
+├── routes.js
 ```
 
->**Note:** We placed our call to `navigate` within our `useEffect` because we
->want to navigate our user _after_ they've successfully logged in or out. By
->placing the state that dictates whether or not a user is logged in or out
->within the dependency array of our `useEffect`, we can programmatically
->navigate our user whenever a change in state occurs. This approach means we
->only call `navigate` once our state has updated. You don't always have to put
->`navigate` inside of a `useEffect`, but it makes sense to do so in this case.
+You'll need to fill out these various files to get your app up and running.
+You're also free to make your own new components when you feel its warranted!
+(Look out for repetitive code, or code that seems like it deserves its own new
+component.)
 
-Now, we can update our `NavBar` component to handle user logout functionality.
+To start up the lab, first run `npm install`, as per usual. Then run `npm run
+server` to start your `json-server` and `npm start` to open the application in
+the browser.
 
-```jsx
-// NavBar.js
-import { NavLink} from "react-router-dom";
-import "./NavBar.css"
-function NavBar({ logout }) {
+### routes.js
 
-  return (
-    <nav>
-      <NavLink
-        to="/"
-        className="nav-link" 
-      >
-        Home
-      </NavLink>
-      <NavLink
-        to="/about"
-        className="nav-link"
-      >
-        About
-      </NavLink>
-      {/* Add the logout function to handle the onClick event */}
-      <button onClick={logout}>Logout</button>
-    </nav>
-  );
-};
+You'll be adding the routes you create to this file and saving them within the
+`routes` variable. You'll need to provide routes for `/`, `/directors`,
+`/actors`, and `/movie`. The `/movie` route should also include a URL parameter
+called `id`. Don't forget that you'll need to import components into this file!
 
-export default NavBar;
-```
+### index.js
 
-And we can update our `Login` component to handle user login.
+Our `index.js` file is currently broken. (It's not rendering anything!) You'll
+need to update it to provide routing to our application using
+`createBrowserRouter` and `RouterProvider`.
 
-```jsx
-// Login.js
-import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+## Components
 
-function Login() {
-  // Access the login function passed as context
-  const login = useOutletContext();
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
+### NavBar
 
-  function handleChange(e) {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+This component needs to render three `NavLink` components. They will be for `/`,
+`/directors`, and `/actors`, in this order (test checks for this). The `NavLink`
+for `/` should render `Home`, `directors` should render `Directors`, and
+`actors` should render `Actors`. Each page should render the NavBar.
 
-  // Create a function that calls the login function when the form is submitted
-  function handleLogin(e) {
-    e.preventDefault();
-    login();
-  };
+### MovieCard
 
-  return (
-    <form onSubmit={handleLogin}>
-      <label for="username">Username</label>
-      <div>
-        <input
-          id="username"
-          type="text"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-        />
-      </div>
-      <label for="password">Password</label>
-      <div>
-        <input
-          id="password"
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-        />      
-      </div>
-      <button type="submit">Login</button>
-  </form>
-  );
-};
+This component is already set up to render the title of one movie. You'll need
+to pass it the appropriate props to render a movie's title. You'll also need to
+use a `Link` component from `react-router-dom` that uses dynamic routing to link
+a user to the `Movie` page, using the movie id as a parameter.
 
-export default Login;
-```
+## Pages
 
-## The Navigate Component
+### Home
 
-In addition to the `useNavigate` hook, React Router also provides a special
-component for redirecting users to a new location: the `Navigate` component.
+This component should render on the `/` route. It should display the text `Home
+Page` in an `<h1>`. It should also render a list of movies using `MovieCard`
+components.
 
-To use the `Navigate` component, we simply invoke it the same way we would
-invoke any other component, then pass it a `to` prop that points toward a route
-endpoint: `<Navigate to="/login" />`.
+### Movie
 
-This component is particularly useful in cases where you need to handle some
-conditional rendering. For example, in the App component below, instead of
-rendering our `NavBar` component we can render a `Navigate` component that will
-navigate to the `/login` endpoint if the user is not logged in:
+This component should render on the `/movie` route. You will need to include a
+URL parameter of `id` on that route.
 
-```jsx
-// App.js
-import { useState, useEffect} from "react";
-import { Outlet, Navigate, useNavigate} from "react-router-dom";
-import NavBar from "./components/NavBar";
+The component will display information about one specific movie. It should
+display the movie's title in an `<h1>` tag, the movie's time in a `<p>` tag, and
+each of the movie's genres within its own `<span>` tag.
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const navigate = useNavigate();
+You'll need to use the `useParams` hook to get URL parameter data about which
+movie you want to render, then use that data to fetch and render the appropriate
+movie.
 
+### Directors
 
-   const login = () =>{
-    setIsLoggedIn(true);
-  };
+This component should render on the `/directors` route. It should display the
+text `Directors Page` in an `<h1>`, and render a new `<article>` element for
+each director in our array of directors. The `<article>` should contain the
+director's name in an `<h2>` and a `<ul>` with a list of their movies.
 
-  const logout = () =>{
-    setIsLoggedIn(false);
-  };
+### Actors
 
-  useEffect(() =>{
-    if (isLoggedIn) {
-      navigate("/");
-    } else {
-      navigate("/login");
-    }
-  }, [isLoggedIn]);
+This component should render the text `Actors Page` in an `<h1>`, and render a
+new `<article>` element for each actor in our array of actors. The `<article>`
+should contain the actor's name in an `<h2>` and a `<ul>` with a list of their
+movies.
 
-  return (
-    <div className="app">
-{/* Add conditional rendering so users have to be logged in to see pages on the site */}
-      {isLoggedIn ? <NavBar logout={logout}  /> : <Navigate to="/login" />}
-      <Outlet context={login}/>
-    </div>
-  );
-};
+> Note: The tests will count how many `<article>`s are nested inside your
+> `Directors` and `Actors` components. So to get tests to pass, you must create
+> _exactly one_ `<article>` for each director or actor, and no additional nested
+> `<article>`s in those components.
 
-export default App;
-```
+### ErrorPage
 
-This means that any user who visits our app and is not logged in will only see
-the login page, and won't be able to use the `NavBar` to navigate to other parts
-of our website.
+You'll need to create a new component within the `pages` folder for our
+`ErrorPage`. This page should display our `NavBar` component, along with the
+text "Oops! Looks like something went wrong." in an `<h1>`.
 
-## Conclusion
-
-React Router gives us full control over how to navigate users around our
-website. In general, the preferred approach is to use the `<Link>` and
-`<NavLink>` components to let users perform navigation by clicking links.
-
-However, there are certain scenarios when we want to navigate a user to a new
-page after they perform some other type of action, like submitting a form or
-logging out. React Router provides two tools to help us with these scenarios:
-the `useNavigate` hook and the `<Navigate>` component.
+> Note: Even when all of your tests are passing, you will see a `console.warn`
+> message indicating that the route the test file is using — `bad-route` —
+> doesn't match any routes.
 
 ## Resources
 
-- [React Router useNavigate](https://reactrouter.com/en/main/hooks/use-navigate)
-- [React Router
-  History](https://reactrouter.com/en/main/start/concepts#history-and-locations)
-- [Navigate](https://reactrouter.com/en/main/components/navigate)
+- [React Router](https://reactrouter.com/en/main)
